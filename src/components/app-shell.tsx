@@ -193,7 +193,7 @@ export function AppShell({ view, caseId, profileAddress }: Props) {
         {view === "funder" ? <OpenClaimView {...common} /> : null}
         {view === "analyst" ? <EvidenceRoom {...common} /> : null}
         {view === "review" ? <ConsensusView {...common} /> : null}
-        {view === "history" ? <TrailView claims={myClaims} loading={loading} refresh={refresh} /> : null}
+        {view === "history" ? <TrailView claims={myClaims} loading={loading} refresh={refresh} activeAddress={activeAddress} /> : null}
         {view === "case" ? <ClaimDetail claim={activeClaim} evidence={activeEvidence} {...common} /> : null}
         {view === "profile" ? <ProfileView address={profileAddress} claims={claims} /> : null}
       </main>
@@ -277,8 +277,11 @@ function ConsensusActions({ claim, busy, getWriteClient, trackWrite }: Common & 
   return <div className="mt-4 flex flex-wrap gap-2 border-t border-[var(--border-muted)] pt-4"><button className="button-primary" onClick={() => resolve("resolve_claim", "Resolve claim")} disabled={Boolean(busy)}><ShieldCheck size={16} /> Resolve</button><button className="button-secondary" onClick={challenge} disabled={Boolean(busy)}><Plus size={16} /> Challenge</button>{claim.state === "UNKNOWN" || claim.state === "STALE" ? <button className="button-secondary" onClick={() => resolve("refresh_unknown", "Refresh unknown")} disabled={Boolean(busy)}><RefreshCw size={16} /> Refresh</button> : null}</div>;
 }
 
-function TrailView({ claims, loading, refresh }: { claims: ClaimRecord[]; loading: boolean; refresh: () => Promise<void> }) {
-  return <Workbench eyebrow="My trail" title="Your opened claims" body="Address-scoped claim files for the connected wallet." action={<button className="button-secondary" onClick={refresh}><RefreshCw size={16} /> Refresh</button>}><ClaimList claims={claims} loading={loading} empty="Connect the wallet used to open claims." /></Workbench>;
+function TrailView({ claims, loading, refresh, activeAddress }: { claims: ClaimRecord[]; loading: boolean; refresh: () => Promise<void>; activeAddress?: string }) {
+  const emptyCopy = activeAddress
+    ? "No claims yet. This wallet has not opened any TrialDrift claims."
+    : "Connect the wallet used to open claims.";
+  return <Workbench eyebrow="My trail" title="Your opened claims" body="Address-scoped claim files for the connected wallet." action={<button className="button-secondary" onClick={refresh}><RefreshCw size={16} /> Refresh</button>}><ClaimList claims={claims} loading={loading} empty={emptyCopy} /></Workbench>;
 }
 
 function ClaimDetail({ claim, evidence, loading, ...props }: Common & { claim?: ClaimRecord; evidence: EvidenceRecord[] }) {
