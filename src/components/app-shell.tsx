@@ -24,6 +24,17 @@ type WalletState = { ready: boolean; mode: "none" | "browser" | "injected"; addr
 type EvidenceForm = { kind: EvidenceRecord["kind"]; url: string; contentHash: string; note: string };
 
 const zeroAddress = "0x0000000000000000000000000000000000000000";
+const demoClaim = {
+  title: "SELECT trial semaglutide cardiovascular benefit",
+  claim: "The SELECT trial found that once-weekly semaglutide 2.4 mg reduced major adverse cardiovascular events in adults with overweight or obesity and established cardiovascular disease, without diabetes.",
+  context: "Compare the public claim against the SELECT trial publication and ClinicalTrials.gov registry. The claim should be treated as supported only if the evidence describes the same trial, population, intervention, and cardiovascular outcome.",
+};
+const demoEvidence = {
+  kind: "TRIAL" as const,
+  url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2307563",
+  contentHash: sha256Placeholder(),
+  note: "NEJM reports SELECT enrolled 17,604 adults with overweight or obesity and established cardiovascular disease, without diabetes; primary cardiovascular events occurred in 6.5% with semaglutide versus 8.0% with placebo, hazard ratio 0.80.",
+};
 const nav = [
   ["Docket", "/cases"],
   ["Open Claim", "/open"],
@@ -230,14 +241,14 @@ function DocketView({ claims, loading, refresh }: Common) {
 }
 
 function OpenClaimView({ busy, getWriteClient, trackWrite }: Common) {
-  const [form, setForm] = useState({ title: "Metformin diabetes prevention claim", claim: "Public claim says metformin prevents type 2 diabetes in high-risk adults based on a named trial.", context: "This dossier should compare public claim language against trial registry and corroborating source evidence." });
+  const [form, setForm] = useState({ title: "", claim: "", context: "" });
   async function submit() {
     await trackWrite("Open claim dossier", undefined, async () => {
       const client = await getWriteClient();
       return client.writeContract({ address: contractAddress, functionName: "open_claim", args: [form.title, form.claim, form.context], value: 0n });
     });
   }
-  return <Workbench eyebrow="Claim intake" title="Open a dossier" body="A claim begins as a public file. Evidence and consensus can arrive later."><div className="grid gap-3"><Input label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} /><Textarea label="Claim text" value={form.claim} onChange={(claim) => setForm({ ...form, claim })} /><Textarea label="Public context" value={form.context} onChange={(context) => setForm({ ...form, context })} /><button className="button-primary w-fit" onClick={submit} disabled={Boolean(busy)}>{busy ? <Loader2 className="animate-spin" size={18} /> : <Plus size={18} />} Open dossier</button></div></Workbench>;
+  return <Workbench eyebrow="Claim intake" title="Open a dossier" body="A claim begins as a public file. Evidence and consensus can arrive later."><div className="grid gap-3"><button className="button-secondary w-fit" onClick={() => setForm(demoClaim)} type="button"><Clipboard size={16} /> Use demo data</button><Input label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} /><Textarea label="Claim text" value={form.claim} onChange={(claim) => setForm({ ...form, claim })} /><Textarea label="Public context" value={form.context} onChange={(context) => setForm({ ...form, context })} /><button className="button-primary w-fit" onClick={submit} disabled={Boolean(busy)}>{busy ? <Loader2 className="animate-spin" size={18} /> : <Plus size={18} />} Open dossier</button></div></Workbench>;
 }
 
 function EvidenceRoom(props: Common) {
@@ -246,14 +257,14 @@ function EvidenceRoom(props: Common) {
 }
 
 function EvidenceForm({ claim, busy, getWriteClient, trackWrite }: Common & { claim: ClaimRecord }) {
-  const [form, setForm] = useState<EvidenceForm>({ kind: "TRIAL", url: "https://clinicaltrials.gov/study/NCT00000419", contentHash: sha256Placeholder(), note: "Official trial registry evidence for this claim." });
+  const [form, setForm] = useState<EvidenceForm>({ kind: "TRIAL", url: "", contentHash: "", note: "" });
   async function submit() {
     await trackWrite("Add evidence", claim.claim_id, async () => {
       const client = await getWriteClient();
       return client.writeContract({ address: contractAddress, functionName: "add_evidence", args: [claim.claim_id, form.kind, form.url, form.contentHash, form.note], value: 0n });
     });
   }
-  return <div className="mt-4 grid gap-3 border-t border-[var(--border-muted)] pt-4"><label><span className="label">Kind</span><select className="field mt-1" value={form.kind} onChange={(event) => setForm({ ...form, kind: event.target.value as EvidenceForm["kind"] })}><option>CLAIM</option><option>TRIAL</option><option>COUNTER</option><option>CONTEXT</option></select></label><Input label="URL" value={form.url} onChange={(url) => setForm({ ...form, url })} /><Input label="Content hash" value={form.contentHash} onChange={(contentHash) => setForm({ ...form, contentHash })} /><Textarea label="Evidence note" value={form.note} onChange={(note) => setForm({ ...form, note })} /><button className="button-primary w-fit" onClick={submit} disabled={Boolean(busy)}>{busy ? <Loader2 className="animate-spin" size={18} /> : <Upload size={18} />} Add evidence</button></div>;
+  return <div className="mt-4 grid gap-3 border-t border-[var(--border-muted)] pt-4"><button className="button-secondary w-fit" onClick={() => setForm(demoEvidence)} type="button"><Clipboard size={16} /> Use demo data</button><label><span className="label">Kind</span><select className="field mt-1" value={form.kind} onChange={(event) => setForm({ ...form, kind: event.target.value as EvidenceForm["kind"] })}><option>CLAIM</option><option>TRIAL</option><option>COUNTER</option><option>CONTEXT</option></select></label><Input label="URL" value={form.url} onChange={(url) => setForm({ ...form, url })} /><Input label="Content hash" value={form.contentHash} onChange={(contentHash) => setForm({ ...form, contentHash })} /><Textarea label="Evidence note" value={form.note} onChange={(note) => setForm({ ...form, note })} /><button className="button-primary w-fit" onClick={submit} disabled={Boolean(busy)}>{busy ? <Loader2 className="animate-spin" size={18} /> : <Upload size={18} />} Add evidence</button></div>;
 }
 
 function ConsensusView(props: Common) {
